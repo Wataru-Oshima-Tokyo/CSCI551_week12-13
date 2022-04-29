@@ -8,10 +8,10 @@ CDEFS=
 CFLAGS= -g -Wall -fopenmp $(INCLUDE_DIRS) $(CDEFS)
 LIBS=
 
-PRODUCT= bisection newton_upd bruteroot regulafalsi_upd regulafalsi_upd2 bruteroot_upd
+PRODUCT= bisection newton_upd bruteroot regulafalsi_upd regulafalsi_upd2 bruteroot_upd train_bruteroot
 
 HFILES= 
-CFILES= newton_upd.c bruteroot regulafalsi_upd regulafalsi_upd2 bruteroot_upd
+CFILES= newton_upd.c bruteroot regulafalsi_upd regulafalsi_upd2 bruteroot_upd train_bruteroot
 CPPFILES= bisection.cpp
 
 SRCS= ${HFILES} ${CFILES}
@@ -40,6 +40,8 @@ regulafalsi_upd: regulafalsi_upd.c
 
 regulafalsi_upd2: regulafalsi_upd2.c
 	$(CC) $(CFLAGS) -o $@ regulafalsi_upd2.c -lm
-	
+
 bruteroot_upd: bruteroot_upd.c
 	$(CC) $(CFLAGS) -o $@ bruteroot_upd.c -lm
+train_bruteroot: train_bruteroot.c
+	$(CC) $(CFLAGS) -o $@ train_bruteroot.c -lm

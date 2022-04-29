@@ -8,10 +8,10 @@ CDEFS=
 CFLAGS= -g -Wall -fopenmp $(INCLUDE_DIRS) $(CDEFS)
 LIBS=
 
-PRODUCT= bisection newton_upd bruteroot regulafalsi_upd regulafalsi_upd2 bruteroot_upd train_bruteroot
+PRODUCT= bisection newton_upd bruteroot regulafalsi_upd regulafalsi_upd2 bruteroot_upd  timeinterp_upd timeinterp_upd_lineup
 
 HFILES= 
-CFILES= newton_upd.c bruteroot regulafalsi_upd regulafalsi_upd2 bruteroot_upd train_bruteroot
+CFILES= newton_upd.c bruteroot regulafalsi_upd regulafalsi_upd2 bruteroot_upd  timeinterp_upd timeinterp_upd_lineup
 CPPFILES= bisection.cpp
 
 SRCS= ${HFILES} ${CFILES}
@@ -41,7 +41,8 @@ regulafalsi_upd: regulafalsi_upd.c
 regulafalsi_upd2: regulafalsi_upd2.c
 	$(CC) $(CFLAGS) -o $@ regulafalsi_upd2.c -lm
 
-bruteroot_upd: bruteroot_upd.c
-	$(CC) $(CFLAGS) -o $@ bruteroot_upd.c -lm
-train_bruteroot: train_bruteroot.c
-	$(CC) $(CFLAGS) -o $@ train_bruteroot.c -lm
+timeinterp_upd: timeinterp_upd.c
+	$(CC) $(CFLAGS) -o $@ timeinterp_upd.c -lm
+
+timeinterp_upd_lineup: timeinterp_upd_lineup.c
+	$(CC) $(CFLAGS) -o $@ timeinterp_upd_lineup.c -lm

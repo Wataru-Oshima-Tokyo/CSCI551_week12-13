@@ -25,7 +25,7 @@
 
 #define DELTA 0.1
 #define NUM_THREADS 4
-#define OMP
+// #define OMP
 // #define VELOCITY
 struct timespec start, stop;
 double fstart, fstop;
@@ -91,32 +91,21 @@ int main(int argc, char *argv[])
         time = 0.0 + (dt*(double)idx);
         lin_left_Riemann_sum += Left_Riemann_sum(fvelocity(time,1), time, dt);
         nlin_left_Riemann_sum += Left_Riemann_sum(fvelocity(time,0), time, dt);
-        #ifdef VELOCITY
-            if((fabs(fvelocity(time,1) - fvelocity(time,0))<1) && time > 400 && time <1400){
-                #ifdef OMP
-                    printf("The two trains line up when the velocites are %lf(linear) m/sec and %lf(non linear) m/sec at %lf seconds\n",fvelocity(time,1),fvelocity(time,0), time);
-                #else
-                    printf("The two trains line up for the first time on the invterval %d to %d when the velocites are %lf(linear) m/sec and %lf(non linear) m/sec at %lf seconds\n", 400, 1400, fvelocity(time,1),fvelocity(time,0), time);
-                    break;
-                #endif
-            }
-            
-        #else
             if((fabs(lin_left_Riemann_sum - nlin_left_Riemann_sum)<1) && time > 600 && time <800){
                 #ifdef OMP
                     printf("The two trains line up when the location is %lf meters at %lf seconds\n", lin_left_Riemann_sum, time);
+
                 #else
-                    printf("The two trains line up for the first time on the invterval %d to %d when the location is %lf meters at %lf seconds\n", 600, 800, lin_left_Riemann_sum, time);
+                    printf("The two trains line up for the first time on the invterval %d to %d when the location is %lf meters \nand velocities are %lf(liner) and %lf(nonlinear) at %lf seconds\n", 600, 800, lin_left_Riemann_sum, fvelocity(time,1), fvelocity(time,0), time);
                     break;
                 #endif
              }
-        #endif
 
     }
     clock_gettime(CLOCK_MONOTONIC, &stop); fstop=(double)stop.tv_sec + ((double)stop.tv_nsec/1000000000.0);
     printf("The toatal time is %f\n", (fstop-fstart));
-    printf("The linear left riemann sum is %f\n", lin_left_Riemann_sum);
-    printf("The non linear left riemann sum is %f\n", nlin_left_Riemann_sum);
+    // printf("The linear left riemann sum is %f\n", lin_left_Riemann_sum);
+    // printf("The non linear left riemann sum is %f\n", nlin_left_Riemann_sum);
     // printf("The trapozoidal sum is %f\n", trapezoidal_sum);
     return 0;
 }

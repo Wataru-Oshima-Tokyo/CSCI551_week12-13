@@ -16,8 +16,8 @@
 // Generally, Newton should converge fastest, followed by Regula Falsi, then Bisection, and the Bruteroot will
 // get the root stepping in one direction looking for a simple sign change.
 //
-#include<stdio.h>
-#include<math.h>
+#include <stdio.h>
+#include <math.h>
 #include <limits.h>
 #include <omp.h>
 #include <time.h>

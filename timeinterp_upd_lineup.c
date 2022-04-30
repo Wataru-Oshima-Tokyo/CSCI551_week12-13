@@ -16,30 +16,30 @@
 // #include "ex3accel.h"
 // #include "ex6_linear.h"
 // #define LINEAR
-#define OMP
+// #define OMP
 
-#ifdef LINEAR
-    #include "ex6_linear.h"
-#else
-    #include "ex6_non_linear.h"
-#endif
+
+#include "_ex6_linear.h"
+#include "_ex6_non_linear.h"
+
 
 #define DELTA 0.1
 #define NUM_THREADS 4
-
+#define OMP
+// #define VELOCITY
 struct timespec start, stop;
 double fstart, fstop;
-double lin_velocities[1800];
-double nonlin_velocities[1800];
+double lin_velocities[1801];
+double nonlin_velocities[1801];
 // table look-up for acceleration profile given and velocity profile determined
 //
 // Note: for 2 functions (2 trains) we would want to make 2 different versions of this
 //       function or better yet, pass in the table to use.
 //
-double table_accel(int timeidx);
-double table_velocity(int timeidx);
-double faccel(double time);
-double fvelocity(double time);
+double table_accel(int timeidx, int lin);
+double table_velocity(int timeidx, int lin);
+double faccel(double time, int lin);
+double fvelocity(double time, int lin);
 
 
 double Left_Riemann_sum(double velocity, long double start, long double delta){
@@ -56,10 +56,8 @@ int main(int argc, char *argv[])
     int idx;
     double dt = DELTA;
     double time, steps_per_sec;
-    double vnot=0;
-    double left_Riemann_sum = 0;
-
-    // printf("argc=%d, argv[0]=%s\n", argc, argv[0]);
+    double lvnot=0, nlvnot=0;
+    double lin_left_Riemann_sum = 0, nlin_left_Riemann_sum = 0;;
 
     if(argc == 2)
     {
@@ -71,35 +69,54 @@ int main(int argc, char *argv[])
     #else
         printf("Without OpenMP\n");
     #endif
-    #ifdef LINEAR
-        printf("Linear interp\n");
-    #else
-        printf("Non Linear interp\n");
-    #endif
     steps_per_sec = 1.0 /dt ;
     int maxitr = steps_per_sec*1800;
     
     //change accel to velocity so that I can calculate the area under the curve by left_Riemann sum
     for(int i=0; i<1801; i++){
-        lin_velocities[i] = faccel(i)*1+vnot;
-        nonlin_velocities[i] = 
-        vnot = velocities[i];
+        lin_velocities[i] = faccel(i,1)*1+lvnot;
+        nonlin_velocities[i] = faccel(i,0)*1+nlvnot;
+        lvnot = lin_velocities[i];
+        nlvnot = nonlin_velocities[i];
     }
 
     
     clock_gettime(CLOCK_MONOTONIC, &start); fstart=(double)start.tv_sec + ((double)start.tv_nsec/1000000000.0);
     #ifdef OMP
-        #pragma omp parallel for num_threads(NUM_THREADS) default(none) reduction(+:left_Riemann_sum) private(time) shared(dt, idx,maxitr)
+        #pragma omp parallel for num_threads(NUM_THREADS) default(none) reduction(+:lin_left_Riemann_sum,nlin_left_Riemann_sum) private(time) shared(dt, idx,maxitr)
     #endif
     for(idx=0; idx <= maxitr; idx++)
     {
         // time you would use in your integrator and faccel(time) is the fuction to integrate
         time = 0.0 + (dt*(double)idx);
-        left_Riemann_sum += Left_Riemann_sum(fvelocity(time), time, dt);
+        lin_left_Riemann_sum += Left_Riemann_sum(fvelocity(time,1), time, dt);
+        nlin_left_Riemann_sum += Left_Riemann_sum(fvelocity(time,0), time, dt);
+        #ifdef VELOCITY
+            if((fabs(fvelocity(time,1) - fvelocity(time,0))<1) && time > 400 && time <1400){
+                #ifdef OMP
+                    printf("The two trains line up when the velocites are %lf(linear) m/sec and %lf(non linear) m/sec at %lf seconds\n",fvelocity(time,1),fvelocity(time,0), time);
+                #else
+                    printf("The two trains line up for the first time on the invterval %d to %d when the velocites are %lf(linear) m/sec and %lf(non linear) m/sec at %lf seconds\n", 400, 1400, fvelocity(time,1),fvelocity(time,0), time);
+                    break;
+                #endif
+            }
+            
+        #else
+            if((fabs(lin_left_Riemann_sum - nlin_left_Riemann_sum)<1) && time > 600 && time <800){
+                #ifdef OMP
+                    printf("The two trains line up when the location is %lf meters at %lf seconds\n", lin_left_Riemann_sum, time);
+                #else
+                    printf("The two trains line up for the first time on the invterval %d to %d when the location is %lf meters at %lf seconds\n", 600, 800, lin_left_Riemann_sum, time);
+                    break;
+                #endif
+             }
+        #endif
+
     }
     clock_gettime(CLOCK_MONOTONIC, &stop); fstop=(double)stop.tv_sec + ((double)stop.tv_nsec/1000000000.0);
     printf("The toatal time is %f\n", (fstop-fstart));
-    printf("The left riemann sum is %f\n", left_Riemann_sum);
+    printf("The linear left riemann sum is %f\n", lin_left_Riemann_sum);
+    printf("The non linear left riemann sum is %f\n", nlin_left_Riemann_sum);
     // printf("The trapozoidal sum is %f\n", trapezoidal_sum);
     return 0;
 }
@@ -109,9 +126,9 @@ int main(int argc, char *argv[])
 //
 // Added array bounds check for known size of train arrays
 //
-double table_accel(int timeidx)
+double table_accel(int timeidx, int lin)
 {
-    long unsigned int tsize = sizeof(DefaultProfile) / sizeof(double);
+    long unsigned int tsize = sizeof(Lin_DefaultProfile) / sizeof(double);
 
     // Check array bounds for look-up table
     if(timeidx > tsize)
@@ -120,8 +137,10 @@ double table_accel(int timeidx)
         return 0;
         // exit(-1);
     }
-
-    return DefaultProfile[timeidx];
+    if(lin==1)
+        return Lin_DefaultProfile[timeidx];
+    else   
+        return NLin_DefaultProfile[timeidx];
 }
 
 
@@ -131,7 +150,7 @@ double table_accel(int timeidx)
 // accel[timeidx] <= accel[time] < accel[timeidx_next]
 //
 //
-double faccel(double time)
+double faccel(double time, int lin)
 {
     // The timeidx is an index into the known acceleration profile at a time <= time of interest passed in
     //
@@ -164,14 +183,14 @@ double faccel(double time)
                // 
                //      accel[time] = accel[timeidx] + (accel[timeidx_next] - accel[timeidx]) * delta_t
                //
-               table_accel(timeidx) + ( (table_accel(timeidx_next) - table_accel(timeidx)) * delta_t)
+               table_accel(timeidx, lin) + ( (table_accel(timeidx_next, lin) - table_accel(timeidx, lin)) * delta_t)
            );
 }
 
 
-double table_velocity(int timeidx)
+double table_velocity(int timeidx, int lin)
 {
-    long unsigned int tsize = sizeof(velocities) / sizeof(double);
+    long unsigned int tsize = sizeof(lin_velocities) / sizeof(double);
 
     // Check array bounds for look-up table
     if(timeidx > tsize)
@@ -180,12 +199,14 @@ double table_velocity(int timeidx)
         return 0;
         // exit(-1);
     }
-
-    return velocities[timeidx];
+    if(lin==1)
+        return lin_velocities[timeidx];
+    else
+        return  nonlin_velocities[timeidx];
 }
 
 
-double fvelocity(double time)
+double fvelocity(double time, int lin)
 {
     // The timeidx is an index into the known acceleration profile at a time <= time of interest passed in
     //
@@ -218,6 +239,7 @@ double fvelocity(double time)
                // 
                //      accel[time] = accel[timeidx] + (accel[timeidx_next] - accel[timeidx]) * delta_t
                //
-               table_velocity(timeidx) + ( (table_velocity(timeidx_next) - table_velocity(timeidx)) * delta_t)
+               
+               table_velocity(timeidx, lin) + ( (table_velocity(timeidx_next, lin) - table_velocity(timeidx, lin)) * delta_t)
            );
 }

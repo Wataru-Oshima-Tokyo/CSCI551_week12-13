@@ -5,14 +5,14 @@ CC = gcc
 CPP = g++
 
 CDEFS=
-CFLAGS= -g -Wall -fopenmp $(INCLUDE_DIRS) $(CDEFS)
+CFLAGS= -g -Wall -fopenmp  $(INCLUDE_DIRS) $(CDEFS)
 LIBS=
 
-PRODUCT= bisection newton_upd bruteroot regulafalsi_upd regulafalsi_upd2 bruteroot_upd  timeinterp_upd timeinterp_upd_lineup
+PRODUCT=  newton_upd bruteroot regulafalsi_upd regulafalsi_upd2 bruteroot_upd  timeinterp_upd timeinterp_upd_lineup
 
 HFILES= 
 CFILES= newton_upd.c bruteroot regulafalsi_upd regulafalsi_upd2 bruteroot_upd  timeinterp_upd timeinterp_upd_lineup
-CPPFILES= bisection.cpp
+
 
 SRCS= ${HFILES} ${CFILES}
 OBJS= ${CFILES:.c=.o}
@@ -25,13 +25,8 @@ clean:
 
 bruteroot:	bruteroot.c
 	$(CC) $(CFLAGS) -o $@ bruteroot.c -lm
-
-bisection:	bisection.cpp
-	$(CPP) $(CFLAGS) -o $@ bisection.cpp -lm
-
-regulafalsi:	regulafalsi.c
-	$(CC) $(CFLAGS) -o $@ regulafalsi.c -lm
-
+bruteroot_upd: bruteroot_upd.c
+	$(CC) $(CFLAGS) -o $@ bruteroot_upd.c -lm
 newton_upd:	newton_upd.c
 	$(CC) $(CFLAGS) -o $@ newton_upd.c -lm
 
